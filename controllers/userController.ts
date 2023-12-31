@@ -1,11 +1,12 @@
 import express, { NextFunction, Request, Response } from "express";
-import userModel from "../models/userModel";
+import userModel, { IUser } from "../models/userModel";
 import ErrorHandler from "../utils/ErrorHandler";
 import catchAsyncError from "../middleware/catchAsynceErroe";
 import jwt, { Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
+import { sendToken } from "../utils/jwt";
 
 require("dotenv").config();
 
@@ -15,17 +16,15 @@ interface IRegistrationBody {
   name: string;
   email: string;
   password: string;
-  avatar?: string;
+  // avatar?: string;
 }
 export const registrationUser = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { name, email, password } = req.body;
       const isEmailExist = await userModel.findOne({ email: email });
-      console.log(isEmailExist);
-      if (!isEmailExist) {
-        // return next(new ErrorHandler("Email already exists", 400));
-        console.log("Email already exists");
+      if (isEmailExist) {
+        return next(new ErrorHandler("Email already exists", 400));
       }
       const user: IRegistrationBody = {
         name,
@@ -77,3 +76,85 @@ export const createActivationToken = (user: any): IActivationToken => {
   );
   return { token, activationCode };
 };
+//activate user
+interface IActivationRequest {
+  activation_token: string;
+  activation_code: string;
+}
+export const activateUser = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { activation_token, activation_code } =
+        req.body as IActivationRequest;
+      const newUser: { user: IUser; activationCode: string } = jwt.verify(
+        activation_token,
+        process.env.JWT_PRIVATE_KEY as string
+      ) as { user: IUser; activationCode: string };
+      if (newUser.activationCode !== activation_code) {
+        return next(new ErrorHandler("Invalid activation code", 400));
+      }
+      const { name, email, password } = newUser.user;
+      // const existUser = await userModel.findOne({ email: email });
+      // if (existUser) {
+      //   return next(new ErrorHandler("User already exists", 400));
+      // }
+      const user = await userModel.create({ name, email, password });
+      res
+        .status(201)
+        .json({ success: true, message: "Account has been activated" });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+
+////////////////////////////////
+//login user
+
+interface ILoginRequest{
+  email:string;
+  password:string;
+}
+export const loginUser = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password } = req.body as ILoginRequest;
+      const user = await userModel.findOne({ email: email }).select("+password");
+      if(!email || !password) {
+        return next(new ErrorHandler("Please enter email & password", 400));
+      }
+      if (!user) {
+        return next(new ErrorHandler("User not found", 400));
+      }
+      const isPasswordMatch = await user.comparePassword(password);
+      if (!isPasswordMatch) {
+        return next(new ErrorHandler("Invalid email or password", 400));
+      }
+      sendToken(user, 200, res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+//logout user
+export const logoutUser = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.cookie("access_token", "", {
+        maxAge: 1,
+        // expires: new Date(Date.now()),
+        // httpOnly: true,
+      });
+      res.cookie("refresh_token", "", {
+        maxAge: 1,
+        // expires: new Date(Date.now()),
+        // httpOnly: true,
+      });
+      res.status(200).json({ success: true, message: "Logged out Sucessfully" });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);

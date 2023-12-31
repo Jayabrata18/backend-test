@@ -1,5 +1,7 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+require("dotenv").config();
+import jwt from "jsonwebtoken";
 
 const emailRegePattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -7,10 +9,10 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  avatar: {
-    public_id: string;
-    url: string;
-  };
+  // avatar: {
+  //   public_id: string;
+  //   url: string;
+  // };
   role: string;
   isVerified: boolean;
   resetPasswordToken: string;
@@ -18,6 +20,8 @@ export interface IUser extends Document {
   createdAt: Date;
   courses: Array<{ courseId: string }>;
   comparePassword(password: string): Promise<boolean>;
+  SignAccessToken: () => string;
+  SignRefreshToken: () => string;
 }
 const userSchema: Schema<IUser> = new mongoose.Schema(
   {
@@ -48,16 +52,16 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
       minLength: [5, "Your password must be longer than 6 characters"],
       select: false,
     },
-    avatar: {
-      public_id: {
-        type: String,
-        required: true,
-      },
-      url: {
-        type: String,
-        required: true,
-      },
-    },
+    // avatar: {
+    //   public_id: {
+    //     type: String,
+    //     required: true,
+    //   },
+    // url: {
+    //   type: String,
+    //   required: true,
+    // },
+    // },
     role: {
       type: String,
       default: "user",
@@ -93,5 +97,29 @@ userSchema.methods.comparePassword = async function (
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+//sign access token
+userSchema.methods.SignAccessToken = function () {
+  // return jwt.sign({ id: this._id }, process.env.JWT_PRIVATE_KEY as string, {
+  //   expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE,
+  // });
+  return jwt.sign(
+    { id: this._id },
+    process.env.ACCESS_TOKEN || ("" as string),
+    {
+      expiresIn: "1d",
+    }
+  );
+};
+// sign refresh token
+userSchema.methods.SignRefreshToken = function () {
+  return jwt.sign(
+    { id: this._id },
+    process.env.REFRESH_TOKEN || ("" as string),
+    {
+      expiresIn: "30d",
+    }
+  );
+};
 const userModel: Model<IUser> = mongoose.model("User", userSchema);
+
 export default userModel;
