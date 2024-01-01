@@ -3,6 +3,11 @@ import catchAsyncError from "./catchAsynceErroe";
 import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { redis } from "../utils/redis";
+import * as express from "express";
+
+// interface IUser extends express.Request {
+//   user: any;
+// }
 
 //authenticated user
 export const isAuthenticated = catchAsyncError(

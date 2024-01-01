@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import userModel, { IUser } from "../models/userModel";
 import ErrorHandler from "../utils/ErrorHandler";
 import catchAsyncError from "../middleware/catchAsynceErroe";
@@ -7,6 +7,7 @@ import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
 import { sendToken } from "../utils/jwt";
+import { redis } from "../utils/redis";
 
 require("dotenv").config();
 
@@ -108,20 +109,21 @@ export const activateUser = catchAsyncError(
   }
 );
 
-
 ////////////////////////////////
 //login user
 
-interface ILoginRequest{
-  email:string;
-  password:string;
+interface ILoginRequest {
+  email: string;
+  password: string;
 }
 export const loginUser = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body as ILoginRequest;
-      const user = await userModel.findOne({ email: email }).select("+password");
-      if(!email || !password) {
+      const user = await userModel
+        .findOne({ email: email })
+        .select("+password");
+      if (!email || !password) {
         return next(new ErrorHandler("Please enter email & password", 400));
       }
       if (!user) {
@@ -152,7 +154,11 @@ export const logoutUser = catchAsyncError(
         // expires: new Date(Date.now()),
         // httpOnly: true,
       });
-      res.status(200).json({ success: true, message: "Logged out Sucessfully" });
+      const userId = req.user?._id || "";
+      redis.del(userId);
+      res
+        .status(200)
+        .json({ success: true, message: "Logged out Sucessfully" });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
