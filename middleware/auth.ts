@@ -12,7 +12,7 @@ import * as express from "express";
 //authenticated user
 export const isAuthenticated = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const access_token = req.cookies.access_token as string;
+    const access_token = req.cookies.access_token;
     if (!access_token) {
       return next(
         new ErrorHandler("Please login to access this resource", 401)
@@ -20,7 +20,7 @@ export const isAuthenticated = catchAsyncError(
     }
     const decoded = jwt.verify(
       access_token,
-      process.env.JWT_SECRET as string
+      process.env.ACCESS_TOKEN as string
     ) as JwtPayload;
     if (!decoded) {
       return next(new ErrorHandler("access token is invalid", 401));
@@ -33,3 +33,18 @@ export const isAuthenticated = catchAsyncError(
     next();
   }
 );
+
+//validate user role
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!roles.includes(req.user?.role || "")) {
+      return next(
+        new ErrorHandler(
+          `Role (${req.user?.role}) is not allowed to access this resource`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};
