@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ErrorMiddleware } from "./middleware/error";
 import userRouter from "./routes/userRoutes";
-import CourseRouter from "./routes/course.Route";
+import CourseRouter from "./routes/courseRoute";
 
 require("dotenv").config();
 
