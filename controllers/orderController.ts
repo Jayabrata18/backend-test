@@ -7,8 +7,8 @@ import path from "path";
 import sendMail from "../utils/sendMail";
 import catchAsyncError from "../middleware/catchAsynceErroe";
 import CourseModel from "../models/courseModel";
-import { newOrder } from "../services/orderService";
-import notificationModel from "../models/notificationModel";
+import { getAllordersService, newOrder } from "../services/orderService";
+import NotificationModel from "../models/notificationModel";
 
 //create order
 
@@ -64,7 +64,7 @@ export const createOrder = catchAsyncError(
       }
       user?.courses.push(course?._id);
       await user?.save();
-      const notification = await notificationModel.create({
+      const notification = await NotificationModel.create({
         userId: user?._id,
         title: "New Order",
         message: `You have a new order from ${course?.name} `,
@@ -72,6 +72,16 @@ export const createOrder = catchAsyncError(
       course.purchased ? (course.purchased += 1) : course.purchased;
       await course.save();
       newOrder(data, res, next);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+//get all orders ---only for admin
+export const getAllOrders = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllordersService(res);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }

@@ -16,6 +16,7 @@
     "@types/cors": "^2.8.17",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.5",
+    "@types/node-cron": "^3.0.11",
     "@types/nodemailer-ses-transport": "^1.5.5",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.1",
@@ -27,6 +28,7 @@
     "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.7",
     "nodemailer-smtp-transport": "^2.7.4"
   },

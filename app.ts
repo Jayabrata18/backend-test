@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ErrorMiddleware } from "./middleware/error";
 import userRouter from "./routes/userRoutes";
-import CourseRouter from "./routes/courseRoute";
+import courseRouter from "./routes/courseRoute";
 import orderRouter from "./routes/orderRoute";
 import notificationRoute from "./routes/notificationRoute";
 
@@ -17,7 +17,7 @@ app.use(cors());
 
 //routes
 app.use("/api/v1", userRouter);
-app.use("/api/v1", CourseRouter);
+app.use("/api/v1", courseRouter);
 app.use("/api/v1", orderRouter);
 app.use("/api/v1", notificationRoute);
 

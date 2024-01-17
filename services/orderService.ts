@@ -24,3 +24,12 @@ export const newOrder = catchAsyncError(
     });
   }
 );
+
+//get all orders
+export const getAllordersService = async (res: Response) => {
+  const orders = await OrderModel.find().sort({ createdAt: -1 });
+  res.status(201).json({
+    status: "success",
+    orders,
+  });
+};

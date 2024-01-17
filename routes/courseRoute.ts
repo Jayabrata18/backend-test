@@ -5,35 +5,50 @@ import {
   addQuestion,
   addReplyToReview,
   addReview,
+  deleteCourse,
+  getAllCourseAdmin,
   getAllCourses,
   getCourseByUser,
   getSingleCourse,
   uploadCourse,
 } from "../controllers/courseController";
-const CourseRouter = express.Router();
+import { getAllUsers } from "../controllers/userController";
+const courseRouter = express.Router();
 
-CourseRouter.post(
+courseRouter.post(
   "/create-course",
   isAuthenticated,
   authorizeRoles("admin"),
   uploadCourse
 );
-CourseRouter.put(
+courseRouter.put(
   "/update-course",
   isAuthenticated,
   authorizeRoles("admin"),
   uploadCourse
 );
-CourseRouter.get("/get-course/:id", getSingleCourse);
-CourseRouter.get("/get-course/", getAllCourses);
-CourseRouter.get("/get-course-content/:id", isAuthenticated, getCourseByUser);
-CourseRouter.put("/add-question", isAuthenticated, addQuestion);
-CourseRouter.put("/add-answer", isAuthenticated, addAnswer);
-CourseRouter.put("/add-review/:id", isAuthenticated, addReview);
-CourseRouter.put(
+courseRouter.get("/get-course/:id", getSingleCourse);
+courseRouter.get("/get-course/", getAllCourses);
+courseRouter.get("/get-course-content/:id", isAuthenticated, getCourseByUser);
+courseRouter.put("/add-question", isAuthenticated, addQuestion);
+courseRouter.put("/add-answer", isAuthenticated, addAnswer);
+courseRouter.put("/add-review/:id", isAuthenticated, addReview);
+courseRouter.put(
   "/add-reply",
   isAuthenticated,
   authorizeRoles("admin"),
   addReplyToReview
 );
-export default CourseRouter;
+courseRouter.get(
+  "/get-all-courses",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  getAllCourseAdmin
+);
+courseRouter.delete(
+  "/delete-course/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  deleteCourse
+);
+export default courseRouter;
