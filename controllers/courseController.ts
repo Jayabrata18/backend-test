@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
+import notificationModel from "../models/notificationModel";
 
 //upload course
 
@@ -160,10 +161,10 @@ export const addQuestion = catchAsyncError(
       if (!mongoose.Types.ObjectId.isValid(contentId)) {
         return next(new ErrorHandler("Invalid content id", 404));
       }
-      const couresContent = course?.courseData?.find((item: any) =>
+      const courseContent = course?.courseData?.find((item: any) =>
         item._id.equals(contentId)
       );
-      if (!couresContent) {
+      if (!courseContent) {
         return next(new ErrorHandler("Invalid content id", 404));
       }
       //create a new question object
@@ -175,7 +176,12 @@ export const addQuestion = catchAsyncError(
         createdAt: Date.now(),
       };
       //add this question to our course content
-      couresContent.questions.push(newQuestion);
+      courseContent.questions.push(newQuestion);
+      await notificationModel.create({
+        user: req.user?._id,
+        title: "New Question Received",
+        message: `You have a new question in ${courseContent.title}`,
+      });
       //save the updated course
       await course.save();
       res.status(200).json({
@@ -209,13 +215,13 @@ export const addAnswer = catchAsyncError(
       if (!mongoose.Types.ObjectId.isValid(contentId)) {
         return next(new ErrorHandler("Invalid content id", 404));
       }
-      const couresContent = course?.courseData?.find((item: any) =>
+      const courseContent = course?.courseData?.find((item: any) =>
         item._id.equals(contentId)
       );
-      if (!couresContent) {
+      if (!courseContent) {
         return next(new ErrorHandler("Invalid content id", 404));
       }
-      const question = couresContent?.questions?.find((item: any) =>
+      const question = courseContent?.questions?.find((item: any) =>
         item._id.equals(questionId)
       );
       if (!question) {
@@ -232,10 +238,15 @@ export const addAnswer = catchAsyncError(
 
       if (req.user?._id === question.user._id) {
         //create a notification
+        await notificationModel.create({
+          user: req.user?._id,
+          title: "New Question Reply Received",
+          message: `You Have a New Question Reply Received In ${courseContent.title}`,
+        });
       } else {
         const data = {
           name: question.user.name,
-          title: couresContent.title,
+          title: courseContent.title,
         };
         const html = await ejs.renderFile(
           path.join(__dirname, "../mails/question-reply.ejs"),
