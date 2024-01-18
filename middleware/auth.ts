@@ -27,7 +27,7 @@ export const isAuthenticated = catchAsyncError(
     }
     const user = await redis.get(decoded.id);
     if (!user) {
-      return next(new ErrorHandler("user does not exist", 401));
+      return next(new ErrorHandler("Please Login again", 401));
     }
     req.user = JSON.parse(user);
     next();
